@@ -1,0 +1,23 @@
+#!/bin/bash
+
+namespaces="$(kubectl get namespaces --output=name | cut -d'/' -f2)"
+
+if [ "$#" -ne 1 ]
+then
+	namespace=$(kubectl config view --minify | grep namespace: | cut -d':' -f2 |xargs)
+	echo -e $namespaces | tr ' ' '\n' |grep --color=always -E "^|$namespace"
+else
+	checkExists=$(echo $namespaces |grep $1 |wc -l)
+	if [ "$checkExists" -eq "0" ]
+	then
+		echo "namespace \"$1\" not found"
+	else
+		kubectl config set-context --namespace=$1 --current
+		if [ "$?" -eq "0" ]
+		then
+			echo "switched to namespace: $1"
+		else
+			echo "could not change namespace in current config"
+		fi
+	fi
+fi
